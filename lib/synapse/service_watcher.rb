@@ -3,6 +3,7 @@ require "synapse/service_watcher/zookeeper"
 require "synapse/service_watcher/ec2tag"
 require "synapse/service_watcher/dns"
 require "synapse/service_watcher/docker"
+require "synapse/service_watcher/serf"
 
 module Synapse
   class ServiceWatcher
@@ -12,7 +13,8 @@ module Synapse
       'zookeeper'=>ZookeeperWatcher,
       'ec2tag'=>EC2Watcher,
       'dns' => DnsWatcher,
-      'docker' => DockerWatcher
+      'docker' => DockerWatcher,
+      'serf' => SerfWatcher,
     }
 
     # the method which actually dispatches watcher creation requests
