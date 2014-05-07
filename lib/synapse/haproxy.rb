@@ -634,7 +634,8 @@ module Synapse
         watcher.backends.shuffle.map {|backend|
           backend_name = construct_name(backend)
           "\tserver #{backend_name} #{backend['host']}:#{backend['port']} #{watcher.haproxy['server_options']}".
-            gsub('{md5cookie}', Digest::MD5.hexdigest(backend_name))
+            gsub('{md5cookie}', Digest::MD5.hexdigest(backend_name)) +
+            ((backend.has_key?('extra_haproxy_conf')) ? ' ' + backend['extra_haproxy_conf'] : '')
         }
       ]
     end

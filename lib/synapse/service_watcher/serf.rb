@@ -5,6 +5,15 @@ require 'thread'
 module Synapse
   class SerfWatcher < BaseWatcher
 
+    def initialize(opts = {}, synapse)
+      super(opts, synapse)
+
+      @all_backups_except_one = false
+      if opts['haproxy']['all_backups_except_one']
+        @all_backups_except_one = opts['haproxy']['all_backups_except_one']
+      end
+    end
+
     def start
       @serf_members = '/dev/shm/serf_members.json'
       @cycle_delay = 1
@@ -105,10 +114,30 @@ module Synapse
           member['tags'].each do |tag,data|
             if tag =~ /^smart:#{@name}(|_[0-9]+)$/
               host,port = data.split ':'
+
+              # Special trick
+              # If we have a all_backups_except_one option
+              # We use it here
+              # It makes every server except the one we specify (typically the current one)
+              # be the only one that doesn't have a 'backup' flag in haproxy. Useful for a
+              # scenario where we have a lot of slave servers (ie. mysql, sphinx) that have
+              # a local copy of data, and we prefer them, but want to fallback to the others
+              # in case of a problem
+              
+              extra_haproxy_conf = ''
+
+              if @all_backups_except_one
+                if host != @all_backups_except_one
+                  extra_haproxy_conf = 'backup'
+                end
+              end
+
+
               new_backends << {
                 'name' => member['name'],
                 'host' => host,
                 'port' => port,
+                'extra_haproxy_conf' => extra_haproxy_conf,
               }
               log.debug "discovered backend #{member['name']} at #{host}:#{port} for service #{@name}"
             end
